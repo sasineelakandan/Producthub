@@ -1,8 +1,9 @@
-'use client'
+'use client';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
-import { toast } from 'react-toastify'; 
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type LoginFormInputs = {
   username: string;
@@ -27,7 +28,6 @@ const Login: React.FC = () => {
       });
 
       console.log('Login successful:', response.data);
-     
 
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Login failed', {
@@ -89,6 +89,9 @@ const Login: React.FC = () => {
           Don't have an account? <a href="/signup" className="text-red-600 font-medium hover:underline">Sign up</a>
         </p>
       </div>
+
+      {/* Toast container */}
+      <ToastContainer />
     </div>
   );
 };
