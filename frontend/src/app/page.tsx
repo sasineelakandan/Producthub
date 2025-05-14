@@ -40,7 +40,7 @@ const Login: React.FC = () => {
         });
   
         setTimeout(() => {
-          router.push('/Home');
+          router.push('/home');
         }, 1000);
       } else {
         toast.error('No token received from server', {

@@ -5,6 +5,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getCategories, saveProduct, uploadImage } from '@/service/productService';
+import Navbar from '../component/Navbar';
 
 type ProductFormData = {
   Id: number;
@@ -145,6 +146,9 @@ const AddProduct: React.FC = () => {
   };
 
   return (
+
+    <div>
+      <Navbar/>
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <ToastContainer position="top-right" autoClose={5000} />
       
@@ -453,6 +457,7 @@ const AddProduct: React.FC = () => {
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 };
