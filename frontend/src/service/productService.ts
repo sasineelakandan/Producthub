@@ -26,6 +26,14 @@ export const getProductImage = async (token: string, imagePath: string) => {
   return res;
 };
 
+export const loginApi= async(formData:any)=>{
+  const res=await axios.post(
+    `${process.env.NEXT_PUBLIC_ADMIN_BACKEND_URL}/api/Auth/GetAccess`,
+    formData
+  );
+
+  return res
+}
 
 export const getCategories = async (token: string) => {
   const res = await axios.get(`${API_BASE}/api/Item/GetItemCategories`, getAuthHeader(token));

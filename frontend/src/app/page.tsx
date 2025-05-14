@@ -6,6 +6,7 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import 'react-toastify/dist/ReactToastify.css';
+import { loginApi } from '@/service/productService';
 
 type LoginFormInputs = {
   userName: string;
@@ -24,10 +25,7 @@ const Login: React.FC = () => {
       formData.append('userName', data.userName);
       formData.append('password', data.password);
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_ADMIN_BACKEND_URL}/api/Auth/GetAccess`,
-        formData
-      );
+      const response = await loginApi(formData)
 
       const token = response.data?.Data?.Token;
 
