@@ -3,29 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getProductImage, getProducts } from '../../service/productService';
-import { FiHeart, FiShoppingCart, FiStar, FiChevronRight, FiShare2 } from 'react-icons/fi';
+import { FiHeart, FiShoppingCart, FiStar, FiShare2 } from 'react-icons/fi';
 import Navbar from '../component/Navbar';
 
+import {Product} from '../../types/index'
 
-interface Product {
-  Id: number;
-  ItemName: string;
-  Category: string;
-  SellingPrice: number;
-  ImagePath: string;
-  CostOfGoods?: number;
-  GSTApplicable?: boolean;
-  OpeningStock?: number;
-  OpeningStockDate?: string;
-  SKU?: string;
-  Rating?: number;
-  Description?: string;
-}
+
 
 export default function ProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>('');
-  const [selectedSize, setSelectedSize] = useState<string>('XS');
+ 
   const [quantity, setQuantity] = useState<number>(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [imageMap, setImageMap] = useState<{ [key: number]: string }>({});

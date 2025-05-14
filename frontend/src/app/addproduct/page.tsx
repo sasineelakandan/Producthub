@@ -6,19 +6,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getCategories, saveProduct, uploadImage } from '@/service/productService';
 import Navbar from '../component/Navbar';
+import {ProductFormData} from '../../types/index'
 
-type ProductFormData = {
-  Id: number;
-  ItemCategoryId: number;
-  SKU: number;
-  ItemName: string;
-  CostOfGoods: number;
-  SellingPrice: number;
-  OpeningStock: number;
-  OpeningStockDate: string;
-  IsInventory: boolean;
-  GSTApplicable: boolean;
-};
 
 const AddProduct: React.FC = () => {
   const {
@@ -126,7 +115,7 @@ const AddProduct: React.FC = () => {
       }
 
       setIsSubmitting(true);
-      
+      console.log(data)
       const response = await saveProduct(token, data);
       setProductIdInput(response.data.Data.Id)
       if (response) {

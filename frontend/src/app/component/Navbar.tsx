@@ -4,9 +4,7 @@ import { FiChevronRight, FiLogOut } from 'react-icons/fi';
 
 const Navbar = () => {
   const handleLogout = () => {
-    
     localStorage.removeItem('token');
-   
     window.location.href = '/';
   };
 
@@ -14,6 +12,12 @@ const Navbar = () => {
     <nav className="bg-white shadow-lg p-4 flex justify-between items-center sticky top-0 z-10">
       <div className="text-2xl font-bold text-indigo-700">LuxeCart</div>
       <div className="flex gap-4 items-center">
+        <Link href="/home">
+          <button className="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition-all flex items-center gap-2 shadow-md hover:shadow-lg">
+            <span>Home</span>
+          </button>
+        </Link>
+
         <Link href="/addproduct">
           <button className="bg-indigo-700 text-white px-6 py-2 rounded-lg hover:bg-indigo-800 transition-all flex items-center gap-2 shadow-md hover:shadow-lg">
             <span>Add Product</span>
