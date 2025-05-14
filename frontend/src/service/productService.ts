@@ -29,7 +29,7 @@ export const getProductImage = async (token: string, imagePath: string) => {
 
 export const getCategories = async (token: string) => {
   const res = await axios.get(`${API_BASE}/api/Item/GetItemCategories`, getAuthHeader(token));
-  return res.data;
+  return res;
 };
 
 
@@ -39,15 +39,16 @@ export const saveProduct = async (token: string, productData: any) => {
 };
 
 
-export const uploadImage = async (token: string, imageFile: File) => {
+export const uploadImage = async (token: string, imageFile: File,id:any) => {
   const formData = new FormData();
-  formData.append('image', imageFile);
-
+  
+  formData.append('ImageFile', imageFile);
+  formData.append('Id', String(id))
   const res = await axios.post(`${API_BASE}/api/Item/UploadImage`, formData, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'multipart/form-data',
     },
   });
-  return res.data;
+  return res;
 };

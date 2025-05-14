@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import ReactImageMagnify from 'react-image-magnify';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { saveProduct, uploadImage } from '@/service/productService';
+import { getCategories, saveProduct, uploadImage } from '@/service/productService';
 
 type ProductFormData = {
   Id: number;
@@ -37,7 +36,30 @@ const AddProduct: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageURL, setImageURL] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [productIdInput, setProductIdInput] = useState('');
+  const [category,setcategory]=useState([])
 
+  
+  const sellingPrice = watch('SellingPrice') || 0;
+  const costOfGoods = watch('CostOfGoods') || 0;
+  const profit = sellingPrice - costOfGoods;
+  const profitMargin = costOfGoods > 0 ? ((profit / costOfGoods) * 100).toFixed(2) : '0';
+   useEffect(()=>{
+    async function fetchcategory(){
+      try{
+        const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Authentication token not found!');
+          return;
+        }
+        const response=await getCategories(token)
+        setcategory(response.data)
+      }catch(err){
+        console.log(err)
+      }
+    }
+    fetchcategory()
+   },[])
   const handleImageUpload = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -45,54 +67,34 @@ const AddProduct: React.FC = () => {
         toast.error('Authentication token not found!');
         return;
       }
-  
-     
+
       if (!imageFile) {
         toast.error('Please select an image to upload!');
         return;
       }
-  
-      setIsSubmitting(true);
-  
-     
-      await uploadImage(token, imageFile);
-  
-      toast.success('Image uploaded successfully!');
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Image upload failed!');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
 
-  const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('Authentication token not found!');
+      if (!productIdInput) {
+        toast.error('Please enter a product ID!');
+        return;
+      }
+
+      const productId = parseInt(productIdInput);
+      if (isNaN(productId)) {
+        toast.error('Product ID must be a number');
         return;
       }
 
       setIsSubmitting(true);
-      console.log('Final data to be sent:', data);
-
-      const response = await saveProduct(token, data);
-
-      if (response) {
-        toast.success('Product submitted successfully!');
-        console.log('Submitted Data:', response.data);
-        
-        reset();
-        setImageFile(null);
-        setImageURL(null);
-      } else {
-        toast.error('Something went wrong. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('Submission Error:', error);
-      toast.error(error?.response?.data?.message || 'Submission failed!');
+      await uploadImage(token, imageFile, productId);
+      toast.success('Image uploaded successfully!');
+      
+      // Reset image fields after upload
+      setImageFile(null);
+      setImageURL(null);
+      setProductIdInput('');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.error('Image upload failed!');
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +103,7 @@ const AddProduct: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         toast.error('Image size should be less than 5MB');
         return;
       }
@@ -114,125 +116,49 @@ const AddProduct: React.FC = () => {
     }
   };
 
-  const sellingPrice = watch('SellingPrice') || 0;
-  const costOfGoods = watch('CostOfGoods') || 0;
-  const profit = sellingPrice - costOfGoods;
-  const profitMargin = costOfGoods > 0 ? ((profit / costOfGoods) * 100).toFixed(2) : '0';
+  const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Authentication token not found!');
+        return;
+      }
+
+      setIsSubmitting(true);
+      
+      const response = await saveProduct(token, data);
+      setProductIdInput(response.data.Data.Id)
+      if (response) {
+        toast.success('Product submitted successfully!');
+        
+        
+        reset();
+      } else {
+        toast.error('Something went wrong. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Submission Error:', error);
+      toast.error(error?.response?.data?.message || 'Submission failed!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <ToastContainer position="top-right" autoClose={5000} />
+      
+      
+      
+     
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
-        {/* Form Header */}
+        
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
           <h2 className="text-3xl font-bold">Add New Product</h2>
           <p className="opacity-90">Fill in the details below to add a new product to your inventory</p>
         </div>
 
         <div className="p-6 space-y-8">
-          {/* Image Upload Section */}
-          <div className="flex flex-col items-center space-y-4">
-            <div className="relative group">
-              {imageURL ? (
-                <div className="w-full max-w-md h-96 rounded-lg shadow-md overflow-hidden border-2 border-gray-200 transition-all duration-300 group-hover:shadow-lg">
-                  <div className="relative w-full h-full">
-                    <ReactImageMagnify
-                      {...{
-                        smallImage: {
-                          alt: 'Product preview',
-                          isFluidWidth: true,
-                          src: imageURL,
-                        },
-                        largeImage: {
-                          src: imageURL,
-                          width: 1200,
-                          height: 1200,
-                        },
-                        enlargedImageContainerStyle: {
-                          zIndex: 50,
-                          backgroundColor: 'white',
-                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                        },
-                        enlargedImageContainerDimensions: {
-                          width: '150%',
-                          height: '150%',
-                        },
-                        isHintEnabled: true,
-                        hintTextMouse: 'Hover to zoom',
-                        hintTextTouch: 'Touch to zoom',
-                        shouldUsePositiveSpaceLens: true,
-                        imageClassName: 'object-contain w-full h-full',
-                      }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black bg-opacity-20">
-                      <span className="text-white text-sm bg-black bg-opacity-70 px-3 py-1 rounded-full">
-                        Change Image
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full max-w-md h-96 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-indigo-400 transition-colors">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-12 w-12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span className="mt-2 text-sm">Click to upload product image</span>
-                </div>
-              )}
-              <label
-                className="absolute inset-0 cursor-pointer"
-                htmlFor="product-image"
-              />
-            </div>
-
-            <input
-              id="product-image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
-            <input type="hidden" {...register('Id')} />
-
-            {imageURL && (
-              <button
-                type="button"
-                onClick={handleImageUpload}
-                disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md transition-colors font-medium ${
-                  isSubmitting
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                }`}
-                
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Uploading...
-                  </span>
-                ) : (
-                  'Upload Image'
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* Input Fields Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Item Name */}
             <div className="space-y-1">
@@ -275,22 +201,26 @@ const AddProduct: React.FC = () => {
 
             {/* Category */}
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Category *</label>
-              <select
-                {...register('ItemCategoryId', { required: 'Category is required' })}
-                className={`block w-full px-4 py-2 rounded-lg border ${
-                  errors.ItemCategoryId ? 'border-red-500' : 'border-gray-300'
-                } focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
-              >
-                <option value="">Select a category</option>
-                <option value="1">Electronics</option>
-                <option value="2">Clothing</option>
-                <option value="3">Home & Kitchen</option>
-                <option value="4">Books</option>
-                <option value="5">Other</option>
-              </select>
-              {errors.ItemCategoryId && <p className="text-red-500 text-xs mt-1">{errors.ItemCategoryId.message}</p>}
-            </div>
+  <label className="block text-sm font-medium text-gray-700">Category *</label>
+  <select
+    {...register('ItemCategoryId', { required: 'Category is required' })}
+    className={`block w-full px-4 py-2 rounded-lg border ${
+      errors.ItemCategoryId ? 'border-red-500' : 'border-gray-300'
+    } focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+  >
+    <option value="">Select a category</option>
+    {category.map((cat:any) => (
+      <option key={cat.Id} value={cat.Id}>
+        {cat.Text}
+      </option>
+    ))}
+  </select>
+  {errors.ItemCategoryId && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.ItemCategoryId.message}
+    </p>
+  )}
+</div>
 
             {/* Cost of Goods */}
             <div className="space-y-1">
@@ -455,6 +385,74 @@ const AddProduct: React.FC = () => {
           </div>
         </div>
       </form>
+      <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden mt-8 p-6">
+        <h2 className="text-2xl font-bold mt-6">Upload Product Image</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Product ID Input */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Product ID *</label>
+            <input
+              type="text"
+              value={productIdInput}
+              onChange={(e) => setProductIdInput(e.target.value)}
+              placeholder="Enter product ID"
+              className="block w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+          
+          {/* Image Upload */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Product Image *</label>
+            <div className="flex items-center gap-4">
+              <label className="cursor-pointer">
+                <div className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors">
+                  {imageFile ? 'Change Image' : 'Select Image'}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+              {imageFile && (
+                <span className="text-sm text-gray-600">{imageFile.name}</span>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Image Preview */}
+        {imageURL && (
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Image Preview</h3>
+            <div className="w-full max-w-md h-64 rounded-lg overflow-hidden border border-gray-200">
+              <img 
+                src={imageURL} 
+                alt="Preview" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Upload Button */}
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={handleImageUpload}
+            disabled={isSubmitting || !imageFile || !productIdInput}
+            className={`px-6 py-2 rounded-lg font-medium ${
+              isSubmitting || !imageFile || !productIdInput
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            }`}
+          >
+            {isSubmitting ? 'Uploading...' : 'Upload Image'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
